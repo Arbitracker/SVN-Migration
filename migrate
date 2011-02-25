@@ -6,9 +6,9 @@ USER="/home/kore/devel/restructure/users.txt"
 # # Initial import of git repository for arbit trunk
 mkdir tmp
 cd tmp
-git svn init "$REPO" --no-metadata
+git svn init "$REPO/trunk" --no-metadata
 git config svn.authorsfile "$USER"
-git fetch
+git svn fetch
 cd ../
 
 # Copy repository into a new one get rid of the git-svn stuff
@@ -45,7 +45,7 @@ for PROJECT in "installer periodic phpcs phync vcs_wrapper xml" ; do
 	cd tmp
 	git svn init "$REPO/project/$PROJECT" --no-metadata
 	git config svn.authorsfile "$USER"
-	git fetch
+	git svn fetch
 	cd ..
 
 	git clone --no-hardlinks tmp/ "$PROJECT"
