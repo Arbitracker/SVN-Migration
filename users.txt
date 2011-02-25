@@ -1,0 +1,11 @@
+flyingmana = Daniel Fahlke <flyingmana@arbitracker.org>
+hco = Hans-Christian Otto <hco@arbitracker.org>
+jakob = Jakob Westhoff <jakob@arbitracker.org>
+kore = Kore Nordmann <kore@arbitracker.org>
+mapi = Manuel Pichler <mapi@arbitracker.org>
+norro = Arne Nordmann <norro@arbitracker.org>
+seldaek = Jordi Boggiano <seldaek@arbitracker.org>
+svn = Kore Nordmann <kore@arbitracker.org>
+taxilian = Richard Bateman <taxilian@arbitracker.org>
+tobias = Tobias Tom <tobias@arbitracker.org>
+toby = Tobias Schlitt <toby@arbitracker.org>
