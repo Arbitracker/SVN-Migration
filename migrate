@@ -35,8 +35,8 @@ for MODULE in "ci faq importer jslint notification pdepend phpcs phpdoc phploc p
 	git filter-branch -f --subdirectory-filter 'src/modules/tracker' HEAD
 	git filter-branch -f --prune-empty HEAD
 	git reset --hard
-#	git gc --aggressive
-#	git prune
+	git gc --aggressive
+	git prune
 done
 
 # Clone project dirs
