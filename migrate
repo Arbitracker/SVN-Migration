@@ -3,26 +3,24 @@
 REPO="file:///home/kore/devel/restructure/svn-repo"
 USER="/home/kore/devel/restructure/users.txt"
 
-# # Initial import of git repository for arbit trunk
-mkdir tmp
-cd tmp
-git svn init "$REPO/trunk" --no-metadata
-git config svn.authorsfile "$USER"
-git svn fetch
-cd ../
+# Initial import of git repository for arbit trunk
+if [ ! -d "import/" ]; then
+    mkdir tmp
+    cd tmp
+    git svn init "$REPO/trunk" --no-metadata
+    git config svn.authorsfile "$USER"
+    git svn fetch
+    cd ../
 
-# Copy repository into a new one get rid of the git-svn stuff
-git clone --no-hardlinks tmp/ module-core/
-rm -rf tmp
-
-# Clone to framework repository
-git clone --no-hardlinks module-core/ framework/
+    # Copy repository into a new one get rid of the git-svn stuff
+    git clone --no-hardlinks tmp/ import/
+    rm -rf tmp
+fi
 
 # Extract modules into their own repositories
-for MODULE in "ci faq importer jslint notification pdepend phpcs phpdoc phploc phpunit source tracker wiki" ; do
-# for MODULE in "tracker" ; do
+for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc phpunit source tracker wiki ; do
 	MODULE_PATH="module-$MODULE"
-	git clone --no-hardlinks module-core/ "$MODULE_PATH"
+	git clone --no-hardlinks import/ "$MODULE_PATH"
 
 	cd "$MODULE_PATH"
 	git filter-branch --index-filter \
@@ -32,21 +30,28 @@ for MODULE in "ci faq importer jslint notification pdepend phpcs phpdoc phploc p
 				 -e "s-\(^.*\t\"*\)src/modules/'$MODULE'/classes/\(.*\)\$-\\1src/modules/'$MODULE'/src/\\2-" |
 			GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info &&
 			mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' HEAD
-	git filter-branch -f --subdirectory-filter 'src/modules/tracker' HEAD
+	git filter-branch -f --subdirectory-filter 'src/modules/'$MODULE HEAD
 	git filter-branch -f --prune-empty HEAD
 	git reset --hard
 	git gc --aggressive
 	git prune
+    cd ../
 done
 
+# Copy repository into a new one get rid of the git-svn stuff
+git clone --no-hardlinks import/ module-core/
+
+# Clone to framework repository
+git clone --no-hardlinks import/ framework/
+
 # Clone project dirs
-for PROJECT in "installer periodic phpcs phync vcs_wrapper xml" ; do
+for PROJECT in installer periodic phpcs phync vcs_wrapper xml ; do
 	mkdir tmp
 	cd tmp
 	git svn init "$REPO/project/$PROJECT/trunk" --no-metadata
 	git config svn.authorsfile "$USER"
 	git svn fetch
-	cd ..
+	cd ../
 
 	git clone --no-hardlinks tmp/ "$PROJECT"
 	rm -rf tmp/
