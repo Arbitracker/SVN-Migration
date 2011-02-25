@@ -19,8 +19,8 @@ rm -rf tmp
 git clone --no-hardlinks module-core/ framework/
 
 # Extract modules into their own repositories
-# for MODULE in "ci faq importer jslint notification pdepend phpcs phpdoc phploc phpunit source tracker wiki" ; do
-for MODULE in "tracker" ; do
+for MODULE in "ci faq importer jslint notification pdepend phpcs phpdoc phploc phpunit source tracker wiki" ; do
+# for MODULE in "tracker" ; do
 	MODULE_PATH="module-$MODULE"
 	git clone --no-hardlinks module-core/ "$MODULE_PATH"
 
@@ -43,7 +43,7 @@ done
 for PROJECT in "installer periodic phpcs phync vcs_wrapper xml" ; do
 	mkdir tmp
 	cd tmp
-	git svn init "$REPO/project/$PROJECT" --no-metadata
+	git svn init "$REPO/project/$PROJECT/trunk" --no-metadata
 	git config svn.authorsfile "$USER"
 	git svn fetch
 	cd ..
