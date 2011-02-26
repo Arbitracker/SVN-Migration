@@ -17,9 +17,11 @@ if [ ! -d "import/" ]; then
     rm -rf tmp
 fi
 
+rm -rf git
+
 # Extract modules into their own repositories
 for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc phpunit source tracker wiki ; do
-	MODULE_PATH="module-$MODULE"
+	MODULE_PATH="git/module-$MODULE"
 	git clone --no-hardlinks import/ "$MODULE_PATH"
 
 	cd "$MODULE_PATH"
@@ -35,25 +37,28 @@ for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc ph
 	git reset --hard
 	git gc --aggressive
 	git prune
-    cd ../
+    cd ../../
 done
 
-# Copy repository into a new one get rid of the git-svn stuff
-git clone --no-hardlinks import/ module-core/
+# Remove all modules and store as framework repository
+git clone --no-hardlinks import/ git/framework/
+cd git/framework
+git filter-branch --tree-filter 'rm -rf tests/modules_* tests/modules/ src/modules/' HEAD
+cd ../../
 
-# Clone to framework repository
-git clone --no-hardlinks import/ framework/
+# Clone framework into core repository
+git clone --no-hardlinks git/framework/ git/module-core/
 
 # Clone project dirs
 for PROJECT in installer periodic phpcs phync vcs_wrapper xml ; do
 	mkdir tmp
 	cd tmp
-	git svn init "$REPO/project/$PROJECT/trunk" --no-metadata
+	git svn init "$REPO/projects/$PROJECT/trunk" --no-metadata
 	git config svn.authorsfile "$USER"
 	git svn fetch
 	cd ../
 
-	git clone --no-hardlinks tmp/ "$PROJECT"
+	git clone --no-hardlinks tmp/ "git/$PROJECT"
 	rm -rf tmp/
 done
 
