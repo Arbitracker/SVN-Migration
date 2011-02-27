@@ -69,3 +69,16 @@ for PROJECT in installer periodic phpcs phync vcs_wrapper xml ; do
 	rm -rf tmp/
 done
 
+# Clone website repository
+mkdir tmp
+cd tmp
+git svn init "$REPO/website" --no-metadata
+git config svn.authorsfile "$USER"
+git svn fetch
+cd ../
+
+# Copy repository into a new one get rid of the git-svn stuff
+git clone --no-hardlinks tmp/ website/
+./findExternals "$REPO/website" > website/externals.txt
+rm -rf tmp
+
