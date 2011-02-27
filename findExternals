@@ -1,0 +1,63 @@
+#!/usr/bin/env php
+<?php
+
+if ( !isset( $argv[1] ) )
+{
+    echo "No repsoitory base path specified.\n";
+    exit( 1 );
+}
+
+function findExternals( $basePath, $subDir = '' )
+{
+    $externals = array_map(
+        function( $spec ) use ( $subDir )
+        {
+            return $subDir . $spec;
+        },
+        array_filter(
+            array_map(
+                'trim',
+                explode(
+                    "\n",
+                    shell_exec( 'svn propget svn:externals ' . escapeshellarg( $basePath . $subDir ) )
+                )
+            )
+        )
+    );
+
+    $subDirs = array_map(
+        function ( $dir ) use ( $subDir )
+        {
+            return $subDir . $dir;
+        },
+        array_filter(
+            array_filter(
+                array_map(
+                    'trim',
+                    explode(
+                        "\n",
+                        shell_exec( 'svn ls ' . escapeshellarg( $basePath . $subDir ) )
+                    )
+                )
+            ),
+            function ( $dir )
+            {
+                return substr( $dir, -1 ) === '/';
+            }
+        )
+    );
+
+    foreach ( $subDirs as $dir )
+    {
+        $externals = array_merge(
+            $externals,
+            findExternals( $basePath, $dir )
+        );
+    }
+
+    return $externals;
+}
+
+$externals = findExternals( $argv[1] );
+echo implode( PHP_EOL, $externals );
+
