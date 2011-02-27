@@ -7,12 +7,12 @@ if ( !isset( $argv[1] ) )
     exit( 1 );
 }
 
-function findExternals( $basePath, $subDir = '' )
+function findExternals( $basePath, $subDir = '/' )
 {
     $externals = array_map(
         function( $spec ) use ( $subDir )
         {
-            return $subDir . $spec;
+            return 'svn ' . $subDir . $spec;
         },
         array_filter(
             array_map(

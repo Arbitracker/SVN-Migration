@@ -37,6 +37,9 @@ for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc ph
 	git reset --hard
 	git gc --aggressive
 	git prune
+
+    ../../findExternals "$REPO/src/modules/$MODULE" > externals.txt
+
     cd ../../
 done
 
@@ -44,6 +47,9 @@ done
 git clone --no-hardlinks import/ git/framework/
 cd git/framework
 git filter-branch --tree-filter 'rm -rf tests/modules_* tests/modules/ src/modules/' HEAD
+
+../../findExternals "$REPO/trunk" > externals.txt
+
 cd ../../
 
 # Clone framework into core repository
@@ -59,6 +65,7 @@ for PROJECT in installer periodic phpcs phync vcs_wrapper xml ; do
 	cd ../
 
 	git clone --no-hardlinks tmp/ "git/$PROJECT"
+    ./findExternals "$REPO/projects/$PROJECT/trunk" > "git/$PROJECT/externals.txt"
 	rm -rf tmp/
 done
 
