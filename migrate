@@ -78,7 +78,7 @@ git svn fetch
 cd ../
 
 # Copy repository into a new one get rid of the git-svn stuff
-git clone --no-hardlinks tmp/ website/
-./findExternals "$REPO/website" > website/externals.txt
+git clone --no-hardlinks tmp/ git/website/
+./findExternals "$REPO/website" > git/website/externals.txt
 rm -rf tmp
 
