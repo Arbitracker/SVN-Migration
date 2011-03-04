@@ -1,7 +1,8 @@
 #!/bin/bash
 
-REPO="file:///home/kore/devel/restructure/svn-repo"
-USER="/home/kore/devel/restructure/users.txt"
+REPO="file://"`pwd`"/svn-repo"
+USER=`pwd`"/users.txt"
+BASE="file://"`pwd`
 
 # Initial import of git repository for arbit trunk
 if [ ! -d "import/" ]; then
@@ -13,18 +14,20 @@ if [ ! -d "import/" ]; then
     cd ../
 
     # Copy repository into a new one get rid of the git-svn stuff
-    git clone --no-hardlinks tmp/ import/
+    git clone --no-hardlinks "${BASE}/tmp/" import/
     rm -rf tmp
 fi
 
+# Start from scratch
 rm -rf git
+rm -rf tmp
 
 # Extract modules into their own repositories
 for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc phpunit source tracker wiki ; do
 	MODULE_PATH="git/module-$MODULE"
-	git clone --no-hardlinks import/ "$MODULE_PATH"
+	git clone --no-hardlinks "import/" "tmp/"
 
-	cd "$MODULE_PATH"
+	cd "tmp/"
 	git filter-branch --index-filter \
 		'git ls-files -s |
 			 sed -e "s-\(^.*\t\"*\)tests/modules_'$MODULE'_suite.php-\\1src/modules/'$MODULE'/tests/suite.php-" \
@@ -38,22 +41,36 @@ for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc ph
 	git gc --aggressive
 	git prune
 
-    ../../findExternals "$REPO/src/modules/$MODULE" > externals.txt
+    cd ../
 
+    git clone --no-hardlinks "${BASE}/tmp/" "${MODULE_PATH}"
+    rm -rf tmp/
+
+    cd "$MODULE_PATH"
+    ../../findExternals "$REPO/trunk//src/modules/$MODULE" > externals.txt
+    git add externals.txt
+    git commit -m "Added project externals" externals.txt
     cd ../../
 done
 
 # Remove all modules and store as framework repository
-git clone --no-hardlinks import/ git/framework/
-cd git/framework
+git clone --no-hardlinks "${BASE}/import/" tmp/
+cd tmp/
 git filter-branch --tree-filter 'rm -rf tests/modules_* tests/modules/ src/modules/' HEAD
 
-../../findExternals "$REPO/trunk" > externals.txt
+git reset --hard
+git gc --aggressive
+git prune
 
-cd ../../
+../findExternals "$REPO/trunk" > externals.txt
+git add externals.txt
+git commit -m "Added project externals" externals.txt
+
+cd ../
+git clone --no-hardlinks "${BASE}/tmp/" "git/framework/"
 
 # Clone framework into core repository
-git clone --no-hardlinks git/framework/ git/module-core/
+git clone --no-hardlinks "${BASE}/git/framework/" "git/arbit/"
 
 # Clone project dirs
 for PROJECT in installer periodic phpcs phync vcs_wrapper xml ; do
@@ -64,8 +81,10 @@ for PROJECT in installer periodic phpcs phync vcs_wrapper xml ; do
 	git svn fetch
 	cd ../
 
-	git clone --no-hardlinks tmp/ "git/$PROJECT"
+	git clone --no-hardlinks "${BASE}/tmp/" "git/$PROJECT"
     ./findExternals "$REPO/projects/$PROJECT/trunk" > "git/$PROJECT/externals.txt"
+    git add externals.txt
+    git commit -m "Added project externals" externals.txt
 	rm -rf tmp/
 done
 
