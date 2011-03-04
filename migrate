@@ -4,6 +4,10 @@ REPO="file://"`pwd`"/svn-repo"
 USER=`pwd`"/users.txt"
 BASE="file://"`pwd`
 
+# Start from scratch
+rm -rf git
+rm -rf tmp
+
 # Initial import of git repository for arbit trunk
 if [ ! -d "import/" ]; then
     mkdir tmp
@@ -18,28 +22,25 @@ if [ ! -d "import/" ]; then
     rm -rf tmp
 fi
 
-# Start from scratch
-rm -rf git
-rm -rf tmp
-
 # Extract modules into their own repositories
 for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc phpunit source tracker wiki ; do
-	MODULE_PATH="git/module-$MODULE"
-	git clone --no-hardlinks "import/" "tmp/"
+    MODULE_PATH="git/module-$MODULE"
+    rm -rf tmp
+    git clone --no-hardlinks "import/" "tmp/"
 
-	cd "tmp/"
-	git filter-branch --index-filter \
-		'git ls-files -s |
-			 sed -e "s-\(^.*\t\"*\)tests/modules_'$MODULE'_suite.php-\\1src/modules/'$MODULE'/tests/suite.php-" \
-			 	 -e "s-\(^.*\t\"*\)tests/modules/'$MODULE'/\(.*\)\$-\\1src/modules/'$MODULE'/tests/\\2-" \
-				 -e "s-\(^.*\t\"*\)src/modules/'$MODULE'/classes/\(.*\)\$-\\1src/modules/'$MODULE'/src/\\2-" |
-			GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info &&
-			mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' HEAD
-	git filter-branch -f --subdirectory-filter 'src/modules/'$MODULE HEAD
-	git filter-branch -f --prune-empty HEAD
-	git reset --hard
-	git gc --aggressive
-	git prune
+    cd "tmp/"
+    git filter-branch --index-filter \
+        'git ls-files -s |
+             sed -e "s-\(^.*\t\"*\)tests/modules_'$MODULE'_suite.php-\\1src/modules/'$MODULE'/tests/suite.php-" \
+                 -e "s-\(^.*\t\"*\)tests/modules/'$MODULE'/\(.*\)\$-\\1src/modules/'$MODULE'/tests/\\2-" \
+                 -e "s-\(^.*\t\"*\)src/modules/'$MODULE'/classes/\(.*\)\$-\\1src/modules/'$MODULE'/src/\\2-" |
+            GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info &&
+            mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' HEAD
+    git filter-branch -f --subdirectory-filter 'src/modules/'$MODULE HEAD
+    git filter-branch -f --prune-empty HEAD
+    git reset --hard
+    git gc --aggressive
+    git prune
 
     cd ../
 
@@ -54,6 +55,7 @@ for MODULE in ci faq importer jslint notification pdepend phpcs phpdoc phploc ph
 done
 
 # Remove all modules and store as framework repository
+rm -rf tmp/
 git clone --no-hardlinks "${BASE}/import/" tmp/
 cd tmp/
 git filter-branch --tree-filter 'rm -rf tests/modules_* tests/modules/ src/modules/' HEAD
@@ -74,21 +76,25 @@ git clone --no-hardlinks "${BASE}/git/framework/" "git/arbit/"
 
 # Clone project dirs
 for PROJECT in installer periodic phpcs phync vcs_wrapper xml ; do
-	mkdir tmp
-	cd tmp
-	git svn init "$REPO/projects/$PROJECT/trunk" --no-metadata
-	git config svn.authorsfile "$USER"
-	git svn fetch
-	cd ../
+    rm -rf tmp
+    mkdir tmp
+    cd tmp
+    git svn init "$REPO/projects/$PROJECT/trunk" --no-metadata
+    git config svn.authorsfile "$USER"
+    git svn fetch
+    cd ../
 
-	git clone --no-hardlinks "${BASE}/tmp/" "git/$PROJECT"
+    git clone --no-hardlinks "${BASE}/tmp/" "git/$PROJECT"
     ./findExternals "$REPO/projects/$PROJECT/trunk" > "git/$PROJECT/externals.txt"
+    cd "git/$PROJECT"
     git add externals.txt
     git commit -m "Added project externals" externals.txt
-	rm -rf tmp/
+    cd ../../
+    rm -rf tmp/
 done
 
 # Clone website repository
+rm -rf tmp
 mkdir tmp
 cd tmp
 git svn init "$REPO/website" --no-metadata
@@ -99,5 +105,9 @@ cd ../
 # Copy repository into a new one get rid of the git-svn stuff
 git clone --no-hardlinks tmp/ git/website/
 ./findExternals "$REPO/website" > git/website/externals.txt
+cd "git/website"
+git add externals.txt
+git commit -m "Added project externals" externals.txt
+cd ../../
 rm -rf tmp
 
